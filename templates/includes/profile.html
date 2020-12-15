@@ -1,0 +1,88 @@
+{{define "content"}}
+    <!--页面主要内容-->
+      <div class="container-fluid">
+
+        <div class="row">
+          <div class="col-lg-12">
+            <div class="card">
+              <div class="card-body">
+
+                <div class="edit-avatar">
+                  <img src="images/users/avatar.jpg" alt="..." class="img-avatar">
+                  <div class="avatar-divider"></div>
+                  <div class="edit-avatar-content">
+                    <button class="btn btn-default">修改头像</button>
+                    <p class="m-0">选择一张你喜欢的图片，裁剪后会自动生成264x264大小，上传图片大小不能超过2M。</p>
+                  </div>
+                </div>
+                <hr>
+                <form>
+                  <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" class="form-control" name="username" id="username"  disabled="disabled" />
+                  </div>
+                  <div class="form-group">
+                    <label for="nickname">昵称</label>
+                    <input type="text" class="form-control" name="nickname" id="myNickname" placeholder="输入您的昵称" >
+                  </div>
+                  <div class="form-group">
+                    <label for="email">邮箱</label>
+                    <input type="email" class="form-control" name="email" id="email" aria-describedby="emailHelp" placeholder="请输入正确的邮箱地址">
+                    <small id="emailHelp" class="form-text text-muted">请保证您填写的邮箱地址是正确的。</small>
+                  </div>
+                  <button type="button" class="btn btn-primary" onclick="updateInfo()">保存</button>
+                </form>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    <!--End 页面主要内容-->
+      <script>
+        $(function(){
+          let userInfo = localStorage.getItem("USER_INFO");
+          if (userInfo){
+            let user = JSON.parse(userInfo);
+            $("#username").val(user.username);
+            $("#myNickname").val(user.nickname);
+            $("#email").val(user.email);
+          }
+        });
+
+        function updateInfo(){
+          if (hz.hasVale($("#myNickname"),true)){
+            let nickname = $("#myNickname").val();
+            let email = $("#email").val();
+            $.ajax({
+              //请求方式
+              type : "POST",
+              //请求的媒体类型
+              contentType: "application/json;charset=UTF-8",
+              //请求地址
+              url : "/updateUserInfo",
+              //数据，json字符串
+              data : JSON.stringify({nickname:nickname,email:email}),
+              //请求成功
+              success : function(result) {
+                let userInfo = localStorage.getItem("USER_INFO");
+                let user = JSON.parse(userInfo);
+                user.nickname = nickname;
+                user.email = email;
+                localStorage.setItem('USER_INFO', JSON.stringify(user));
+                hz.notify(result.message,"success")
+              },
+              //请求失败，包含具体的错误信息
+              error : function(e){
+                hz.notify(JSON.parse(e.responseText).message,"danger")
+              }
+
+            });
+          }
+
+
+        }
+      </script>
+{{end}}

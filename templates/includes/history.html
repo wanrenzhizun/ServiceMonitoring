@@ -1,0 +1,310 @@
+{{define "content"}}
+  <link href="/log/js/bootstrap-table/bootstrap-table.min.css" rel="stylesheet">
+  <div class="container-fluid">
+
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="card">
+          <div class="card-toolbar clearfix">
+            <div class="pull-right search-bar" role="form">
+              <div class="input-group">
+                <div class="input-group-btn">
+                  <button class="btn btn-default dropdown-toggle" id="search-btn"
+                          data-toggle="dropdown" type="button" aria-haspopup="true"
+                          aria-expanded="false">
+                    服务名称
+                  </button>
+
+                </div>
+                <input type="text" id="keyword" class="form-control" value="" name="keyword"
+                       placeholder="请输入名称">
+              </div>
+            </div>
+            <div class="toolbar-btn-action">
+              <button class="btn btn-primary m-r-5"  onclick="clearLogs()"><i class="mdi mdi-delete"></i> 清空日志 </button>
+            </div>
+          </div>
+          <div class="card-body">
+
+            <div class="table-responsive">
+              <table id="historyTable"></table>
+            </div>
+
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div>
+      <div class="modal fade " id="viewModal" tabindex="-1" role="dialog" aria-labelledby="viewModalLabel">
+        <div class="modal-dialog  modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+              <h4 class="modal-title" id="exampleModalLabel">详细信息</h4>
+            </div>
+            <div class="modal-body">
+              <!--手风琴效果-->
+              <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+              </div>
+              <!--手风琴效果 End-->
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" onclick="closeViewModal()">关闭</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+  <script type="text/javascript" src="/log/js/bootstrap-table/bootstrap-table.min.js"></script>
+  <script type="text/javascript" src="/log/js/bootstrap-table/locale/bootstrap-table-zh-CN.min.js"></script>
+  <script type="text/javascript">
+    $('#keyword').on("keydown", function (event) {
+      var keyCode = event.code || event.which;
+      if (keyCode == "13") {
+        reloadData();
+        event.preventDefault();
+      }
+    });
+
+    let config = {
+      url: '/serve/getReqLogs',
+      method: 'post',
+      ajaxOptions:{async:true,timeout:9000},
+      queryParamsType: '',
+      sidePagination: "server",
+      pagination: true,
+      pageNumber: 1,      //初始化加载第一页，默认第一页
+      pageSize: 10,      //每页的记录行数（*）
+      pageList: [20, 50, 100, 150],  //可供选择的每页的行数（*）
+      queryParams: queryParams,
+      columns: [{
+        field: 'id',
+        title: '序号',
+        align: 'center',
+        formatter: (value, row, index, field) => {
+          return index + 1;
+        }
+      }, {
+        field: 'serveName',
+        title: '服务名称',
+        align: 'center'
+      }, {
+        field: 'createdAt',
+        title: '请求时间',
+        align: 'center',
+        formatter: (value, row, index, field) => {
+          return hz.renderTime(row.createdAt)
+        }
+      }, {
+        field: 'success',
+        title: '请求结果',
+        align: 'center',
+        formatter: (value, row, index, field) => {
+          let el;
+          if (row.success){
+            el = '<a class="text-success" href="#!" data-toggle="tooltip">成功</a>\n';
+          }else {
+            el = '<a class="text-danger" href="#!" data-toggle="tooltip">失败</a>\n';
+          }
+          return el;
+        }
+      }, {
+        title: '参数',
+        align: 'center',
+        width: 300,
+        formatter: (value, row, index, field) => {
+          let template = $('<div></div>')
+          let el = $('<div class="btn-group"></div>')
+          if (row.params && row.params.length > 30){
+            el.text(row.params.substring(0,29) + "...")
+            el.append('<a title="查看" onclick="openViewModal(\'' + encodeURI(JSON.stringify(row)) + '\')" data-toggle="tooltip"><i class="mdi mdi-eye"></i></a>');
+          }else {
+            el.text(row.params )
+          }
+          template.append(el)
+          return template.html();
+        }
+      }, {
+        title: '请求结果详情',
+        align: 'center',
+        width: 300,
+        formatter: (value, row, index, field) => {
+          let template = $('<div></div>')
+          let el = $('<div class="btn-group"></div>')
+          let respBody = JSON.parse(row.responseBody);
+
+          if (respBody.body && respBody.body.length > 30){
+            el.text(respBody.body.substring(0,29) + "...")
+            el.append('<a  title="查看" onclick="openViewModal(\'' + encodeURI(JSON.stringify(row)) + '\')" data-toggle="tooltip"><i class="mdi mdi-eye"></i></a>');
+          }else {
+            el.text(respBody.body)
+          }
+          template.append(el)
+          return template.html();
+        }
+      }]
+    };
+
+    $('#historyTable').bootstrapTable(config);
+
+    function reloadData() {
+      $('#historyTable').bootstrapTable('refresh', config);
+    }
+
+    function queryParams(params) {
+      let keyword = $("#keyword").val()
+      if (params && keyword) {
+        params.query = JSON.stringify([{field: 'ServeName', value: keyword, type: 're'}]);
+      }
+      return params
+    }
+
+    function openViewModal(row) {
+      if (row) {
+        $('#accordion').empty();
+        let rowData = JSON.parse(decodeURI(row));
+        if (rowData.responseBody){
+          let bodyData = JSON.parse(rowData.responseBody);
+          $('#accordion').append('<div class="panel panel-primary">\n' +
+                  '                  <div class="panel-heading" role="tab" id="headingOne">\n' +
+                  '                    <h4 class="panel-title">\n' +
+                  '                      <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">\n' +
+                  '                        请求地址\n' +
+                  '                      </a>\n' +
+                  '                    </h4>\n' +
+                  '                  </div>\n' +
+                  '                  <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">\n' +
+                  '                    <div class="panel-body">\n' +
+                  '<a href="' + rowData.url + '" target="_blank">' + rowData.url + '</a><br>'+
+                  '请求时间:' + hz.renderTime(rowData.createdAt) + '</a>'+
+                  '                    </div>\n' +
+                  '                  </div>\n' +
+                  '                </div>');
+          $('#accordion').append('<div class="panel panel-cyan">\n' +
+                  '                  <div class="panel-heading" role="tab" id="headingOne">\n' +
+                  '                    <h4 class="panel-title">\n' +
+                  '                      <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">\n' +
+                  '                        请求类型\n' +
+                  '                      </a>\n' +
+                  '                    </h4>\n' +
+                  '                  </div>\n' +
+                  '                  <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">\n' +
+                  '                    <div class="panel-body">\n' +
+                  bodyData.proto +
+                  '                    </div>\n' +
+                  '                  </div>\n' +
+                  '                </div>');
+          $('#accordion').append('<div class="panel panel-danger">\n' +
+                  '                  <div class="panel-heading" role="tab" id="headingOne">\n' +
+                  '                    <h4 class="panel-title">\n' +
+                  '                      <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">\n' +
+                  '                        响应头\n' +
+                  '                      </a>\n' +
+                  '                    </h4>\n' +
+                  '                  </div>\n' +
+                  '                  <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">\n' +
+                  '                    <div class="panel-body">\n' +
+                  bodyData.header +
+                  '                    </div>\n' +
+                  '                  </div>\n' +
+                  '                </div>');
+          $('#accordion').append('<div class="panel panel-warning">\n' +
+                  '                  <div class="panel-heading" role="tab" id="headingOne">\n' +
+                  '                    <h4 class="panel-title">\n' +
+                  '                      <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">\n' +
+                  '                        状态码\n' +
+                  '                      </a>\n' +
+                  '                    </h4>\n' +
+                  '                  </div>\n' +
+                  '                  <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">\n' +
+                  '                    <div class="panel-body">\n' +
+                  bodyData.statusCode +
+                  '                    </div>\n' +
+                  '                  </div>\n' +
+                  '                </div>');
+          $('#accordion').append('<div class="panel panel-pink">\n' +
+                  '                  <div class="panel-heading" role="tab" id="headingOne">\n' +
+                  '                    <h4 class="panel-title">\n' +
+                  '                      <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">\n' +
+                  '                        状态\n' +
+                  '                      </a>\n' +
+                  '                    </h4>\n' +
+                  '                  </div>\n' +
+                  '                  <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">\n' +
+                  '                    <div class="panel-body">\n' +
+                  bodyData.status +
+                  '                    </div>\n' +
+                  '                  </div>\n' +
+                  '                </div>');
+          $('#accordion').append('<div class="panel panel-purple">\n' +
+                  '                  <div class="panel-heading" role="tab" id="headingOne">\n' +
+                  '                    <h4 class="panel-title">\n' +
+                  '                      <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">\n' +
+                  '                        响应体\n' +
+                  '                      </a>\n' +
+                  '                    </h4>\n' +
+                  '                  </div>\n' +
+                  '                  <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">\n' +
+                  '                    <div class="panel-body">\n' +
+                  '<xmp>' + bodyData.body + '</xmp>' +
+                  '                    </div>\n' +
+                  '                  </div>\n' +
+                  '                </div>');
+        }else {
+          $('#accordion').append('<div class="panel panel-primary">\n' +
+                  '                  <div class="panel-heading" role="tab" id="headingOne">\n' +
+                  '                    <h4 class="panel-title">\n' +
+                  '                      <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">\n' +
+                  '                        参数详情\n' +
+                  '                      </a>\n' +
+                  '                    </h4>\n' +
+                  '                  </div>\n' +
+                  '                  <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">\n' +
+                  '                    <div class="panel-body">\n' +
+                  rowData.params +
+                  '                    </div>\n' +
+                  '                  </div>\n' +
+                  '                </div>');
+        }
+        $('#viewModal').modal("show");
+      }
+    }
+
+    function closeViewModal() {
+      $('#accordion').empty();
+      $('#viewModal').modal("hide");
+    }
+
+    function clearLogs() {
+      hz.loading('show');
+      $.ajax({
+        //请求方式
+        type: "POST",
+        //请求的媒体类型
+        contentType: "application/json;charset=UTF-8",
+        //请求地址
+        url: "/serve/clearLogs",
+        //请求成功
+        success: function (result) {
+          hz.notify(result.message, "success");
+          reloadData();
+          hz.loading('hide')
+        },
+        //请求失败，包含具体的错误信息
+        error: function (e) {
+          hz.notify(JSON.parse(e.responseText).message, "danger")
+          hz.loading('hide')
+        }
+
+      });
+    }
+
+  </script>
+{{end}}

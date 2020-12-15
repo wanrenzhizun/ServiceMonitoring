@@ -1,0 +1,377 @@
+{{define "content"}}
+    <link href="/log/js/bootstrap-table/bootstrap-table.min.css" rel="stylesheet">
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-toolbar clearfix">
+                        <div class="pull-right search-bar" role="form">
+                            <div class="input-group">
+                                <div class="input-group-btn">
+                                    <button class="btn btn-default dropdown-toggle" id="search-btn"
+                                            data-toggle="dropdown" type="button" aria-haspopup="true"
+                                            aria-expanded="false">
+                                        名称
+                                    </button>
+
+                                </div>
+                                <input type="text" id="keyword" class="form-control" value="" name="keyword"
+                                       placeholder="请输入名称">
+                            </div>
+                        </div>
+                        <div class="toolbar-btn-action">
+                            <a class="btn btn-primary m-r-5" href="#!" data-toggle="modal" data-target="#editModal"
+                               data-whatever="@mdo"><i class="mdi mdi-plus"></i> 新增</a>
+                            <!--<a class="btn btn-success m-r-5" href="#!"><i class="mdi mdi-check"></i> 启用</a>
+                            <a class="btn btn-warning m-r-5" href="#!"><i class="mdi mdi-block-helper"></i> 禁用</a>
+                            <a class="btn btn-danger" href="#!"><i class="mdi mdi-window-close"></i> 删除</a> -->
+                        </div>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="table-responsive">
+                            <table id="table"></table>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div>
+            <div class="modal fade " id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel">
+                <div class="modal-dialog  modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                        aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title" id="exampleModalLabel">基本信息</h4>
+                        </div>
+                        <div class="modal-body">
+                            <form id="serveInfo">
+                                <input type="hidden" name="id" id="id">
+                                <div class="row">
+                                    <div class="form-group col-lg-6">
+                                        <label for="name" class="control-label">名称：</label>
+                                        <input type="text" placeholder="请输入名称" class="form-control" name="name"
+                                               id="name">
+                                    </div>
+                                    <div class="form-group  col-lg-6">
+                                        <label for="group" class="control-label">组：</label>
+                                        <input type="text" placeholder="请输入组" class="form-control" name="group"
+                                               id="group"/>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-lg-12">
+                                        <label for="message-text" class="control-label">报警类型：</label>
+                                        <label class="lyear-radio radio-inline radio-primary">
+                                            <input type="radio" name="alarmType" value="ALL"><span>全部</span>
+                                        </label>
+                                        <label class="lyear-radio radio-inline radio-primary">
+                                            <input type="radio" name="alarmType" value="DING"><span>钉钉</span>
+                                        </label>
+                                        <label class="lyear-radio radio-inline radio-primary">
+                                            <input type="radio" name="alarmType" value="EMAIL"><span>邮箱</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-lg-12">
+                                        <label for="tokenKey" class="control-label">授权token：</label>
+                                        <input type="text" placeholder="请输入授权key，如钉钉key,支持多个token，,分隔" class="form-control"
+                                               name="tokenKey" id="tokenKey">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-lg-6">
+                                        <label for="allowFail" class="control-label">允许失败次数：</label>
+                                        <input type="text" placeholder="请输入允许失败次数" class="form-control"
+                                               name="allowFail" id="allowFail">
+                                    </div>
+                                    <div class="form-group col-lg-6">
+                                        <label for="dingKey" class="control-label">关键字：</label>
+                                        <input type="text" placeholder="请输入关键字，钉钉机器人需要" class="form-control"
+                                               name="dingKey" id="dingKey">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-lg-12">
+                                        <label for="url" class="control-label">请求地址：</label>
+                                        <input type="text" placeholder="请输入请求地址" class="form-control" name="url"
+                                               id="url">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-lg-6">
+                                        <label for="url" class="control-label">请求方法：</label>
+                                        <select placeholder="请选择请求方法" class="form-control" id="type" name="type"
+                                                size="1">
+                                            <option value="">请选择</option>
+                                            <option value="GET">GET</option>
+                                            <option value="POST">POST</option>
+                                            <option value="PUT">PUT</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-lg-6">
+                                        <label for="email" class="control-label">邮箱：</label>
+                                        <input type="text" placeholder="请输入邮箱，如果选择邮箱报警需要输入" class="form-control"
+                                               name="email" id="email">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-lg-12">
+                                        <label for="header" class="control-label">附件请求头：</label>
+                                        <textarea placeholder="请输入请求附加请求头，json字符串" class="form-control"
+                                                  name="header" id="header"></textarea>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-lg-12">
+                                        <label for="params" class="control-label">请求参数：</label>
+                                        <textarea placeholder="请输入请求参数，get为string，post为json字符串" class="form-control"
+                                                  name="params" id="params"></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="form-group col-lg-12">
+                                        <label for="rule" class="control-label">返回结果判断：</label>
+                                        <textarea placeholder="请输入结果判断规则，支持正则表达式，如果不输入则默认code=200" class="form-control"
+                                                  name="rule" id="rule"></textarea>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-lg-12">
+                                        <label for="cron" class="control-label">执行间隔：</label>
+                                        <input type="text" placeholder="请输入cron表达式" class="form-control" name="cron"
+                                               id="cron"/>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" onclick="closeEditModal()">关闭</button>
+                            <button type="button" class="btn btn-primary" onclick="saveServeInfo()">保存</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+    <script type="text/javascript" src="/log/js/bootstrap-table/bootstrap-table.min.js"></script>
+    <script type="text/javascript" src="/log/js/bootstrap-table/locale/bootstrap-table-zh-CN.min.js"></script>
+    <script type="text/javascript">
+        $('#keyword').on("keydown", function (event) {
+            var keyCode = event.code || event.which;
+            if (keyCode == "13") {
+                reloadData();
+                event.preventDefault();
+            }
+        });
+
+        let config = {
+            url: '/serve/getServeInfos',
+            method: 'post',
+            queryParamsType: '',
+            sidePagination: "server",
+            pagination: true,
+            pageNumber: 1,      //初始化加载第一页，默认第一页
+            pageSize: 10,      //每页的记录行数（*）
+            pageList: [20, 50, 100, 150],  //可供选择的每页的行数（*）
+            queryParams: queryParams,
+            columns: [{
+                field: 'id',
+                title: '序号',
+                align: 'center',
+                formatter: (value, row, index, field) => {
+                    return index + 1;
+                }
+            }, {
+                field: 'name',
+                title: '名称',
+                align: 'center'
+            }, {
+                field: 'group',
+                title: '分组',
+                align: 'center'
+            }, {
+                field: 'type',
+                title: '请求方式',
+                align: 'center'
+            }, {
+                field: 'alarmType',
+                title: '报警方式',
+                align: 'center'
+            }, {
+                field: 'status',
+                title: '状态',
+                align: 'center',
+                formatter: (value, row, index, field) => {
+                    let el;
+                    switch (row.status) {
+                        case "RUN":
+                            el = '<a class="text-success" href="#!" data-toggle="tooltip">运行中</a>\n';
+                            break;
+                        case "STOP":
+                            el = '<a class="text-warning" href="#!" data-toggle="tooltip">已停止</a>\n';
+                            break;
+                        case "HOLD":
+                            el = '<a class="text-warning" href="#!" data-toggle="tooltip">已挂起</a>\n';
+                            break;
+                        default:
+                            el = '<a class="text-default" href="#!" data-toggle="tooltip">未运行</a>\n'
+                            break;
+
+                    }
+                    return el;
+                }
+            }, {
+                title: '操作',
+                align: 'center',
+                width: 120,
+                formatter: (value, row, index, field) => {
+                    let template = $('<div></div>')
+                    let el = $('<div class="btn-group"></div>')
+                    el.append('<a class="btn btn-xs btn-primary" href="#!" title="编辑" onclick="openEditModal(\'' + encodeURI(JSON.stringify(row)) + '\')" data-toggle="tooltip"><i class="mdi mdi-pencil"></i></a>');
+                    el.append('<a class="btn btn-xs btn-danger" href="#!" title="删除"  onclick="deleteRow(\'' + row.id + '\')" data-toggle="tooltip"><i class="mdi mdi-window-close"></i></a>');
+                    if (row.status && row.status == 'RUN') {
+                        el.append('<a class="btn btn-xs btn-warning" href="#!" title="停止" onclick="updateRow(\'' + row.id + '\',\'STOP\')"  data-toggle="tooltip"><i class="mdi mdi-stop-circle-outline"></i></a>\n');
+                    } else {
+                        el.append('<a class="btn btn-xs btn-success" href="#!" title="启动" onclick="updateRow(\'' + row.id + '\',\'RUN\')"  data-toggle="tooltip"><i class="mdi mdi-play-circle-outline"></i></a>\n');
+                    }
+                    template.append(el)
+                    return template.html();
+                }
+            }]
+        };
+
+        $('#table').bootstrapTable(config);
+
+        function reloadData() {
+            $('#table').bootstrapTable('refresh', config);
+        }
+
+        function queryParams(params) {
+            let keyword = $("#keyword").val()
+            if (params && keyword) {
+                params.query = JSON.stringify([{field: 'Name', value: keyword, type: 're'}]);
+            }
+            return params
+        }
+
+        function openEditModal(row) {
+            if (row) {
+                hz.formDataLoad("serveInfo", JSON.parse(decodeURI(row)))
+                $('#editModal').modal("show");
+            }
+        }
+
+        function closeEditModal() {
+            $('#editModal').modal('hide');
+            $("#serveInfo")[0].reset();
+        }
+
+        function saveServeInfo() {
+            if (hz.hasVale($("#name"), true) && hz.hasVale($("#url"), true) && hz.hasVale($("#type"), true) && hz.hasVale($("#cron"), true)) {
+                $.ajax({
+                    //请求方式
+                    type: "POST",
+                    //请求的媒体类型
+                    contentType: "application/json;charset=UTF-8",
+                    //请求地址
+                    url: "/serve/addServeInfos",
+                    //数据，json字符串
+                    data: JSON.stringify($("#serveInfo").serializeJson()),
+                    //请求成功
+                    success: function (result) {
+                        hz.notify(result.message, "success");
+                        closeEditModal();
+                        reloadData();
+                    },
+                    //请求失败，包含具体的错误信息
+                    error: function (e) {
+                        hz.notify(JSON.parse(e.responseText).message, "danger")
+                    }
+
+                });
+            }
+        }
+
+        function deleteRow(id) {
+            $.ajax({
+                //请求方式
+                type: "POST",
+                //请求的媒体类型
+                contentType: "application/json;charset=UTF-8",
+                //请求地址
+                url: "/serve/deleteServeInfos",
+                //数据，json字符串
+                data: JSON.stringify({id: id}),
+                //请求成功
+                success: function (result) {
+                    hz.notify(result.message, "success");
+                    reloadData();
+                },
+                //请求失败，包含具体的错误信息
+                error: function (e) {
+                    hz.notify(JSON.parse(e.responseText).message, "danger")
+                }
+
+            });
+        }
+
+        function updateRow(id, status) {
+            $.ajax({
+                //请求方式
+                type: "POST",
+                //请求的媒体类型
+                contentType: "application/json;charset=UTF-8",
+                //请求地址
+                url: "/serve/updateServeInfoField",
+                //数据，json字符串
+                data: JSON.stringify({id: id, field: 'Status', value: status}),
+                //请求成功
+                success: function (result) {
+                    hz.notify(result.message, "success");
+                    reloadData();
+                },
+                //请求失败，包含具体的错误信息
+                error: function (e) {
+                    hz.notify(JSON.parse(e.responseText).message, "danger")
+                }
+
+            });
+        }
+
+        function batchUpdateRow() {
+            $.ajax({
+                //请求方式
+                type: "POST",
+                //请求的媒体类型
+                contentType: "application/json;charset=UTF-8",
+                //请求地址
+                url: "/serve/updateServeInfoField",
+                //数据，json字符串
+                data: JSON.stringify({id: id, field: 'status', value: status}),
+                //请求成功
+                success: function (result) {
+                    hz.notify(result.message, "success");
+                    reloadData();
+                },
+                //请求失败，包含具体的错误信息
+                error: function (e) {
+                    hz.notify(JSON.parse(e.responseText).message, "danger")
+                }
+
+            });
+        }
+
+
+    </script>
+{{end}}

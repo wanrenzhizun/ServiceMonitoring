@@ -1,0 +1,279 @@
+{{define "content"}}
+  <div class="container-fluid">
+
+    <div class="row">
+      <div class="col-sm-6 col-lg-3">
+        <div class="card bg-primary">
+          <div class="card-body clearfix">
+            <div class="pull-right">
+              <p class="h6 text-white m-t-0">监控数量</p>
+              <p class="h3 text-white m-b-0" id="serveCount">0</p>
+            </div>
+            <div class="pull-left"> <span class="img-avatar img-avatar-48 bg-translucent"><i class="mdi mdi-instagram fa-1-5x"></i></span> </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-sm-6 col-lg-3">
+        <div class="card bg-purple">
+          <div class="card-body clearfix">
+            <div class="pull-right">
+              <p class="h6 text-white m-t-0">请求次数</p>
+              <p class="h3 text-white m-b-0" id="requestCount">0</p>
+            </div>
+            <div class="pull-left"> <span class="img-avatar img-avatar-48 bg-translucent"><i class="mdi mdi-account fa-1-5x"></i></span> </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-sm-6 col-lg-3">
+        <div class="card bg-success">
+          <div class="card-body clearfix">
+            <div class="pull-right">
+              <p class="h6 text-white m-t-0">成功次数</p>
+              <p class="h3 text-white m-b-0" id="successCount">0</p>
+            </div>
+            <div class="pull-left"> <span class="img-avatar img-avatar-48 bg-translucent"><i class="mdi mdi-check-all fa-1-5x"></i></span> </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-sm-6 col-lg-3">
+        <div class="card bg-danger">
+          <div class="card-body clearfix">
+            <div class="pull-right">
+              <p class="h6 text-white m-t-0">失败数量</p>
+              <p class="h3 text-white m-b-0" id="failCount">0 条</p>
+            </div>
+            <div class="pull-left"> <span class="img-avatar img-avatar-48 bg-translucent"><i class="mdi mdi-close fa-1-5x"></i></span> </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header">
+            <h4>近期请求成功率</h4>
+          </div>
+          <div class="card-body">
+            <canvas class="js-chartjs-bars" id="successChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header" id="timeChart">
+            <h4>请求耗时</h4>
+          </div>
+          <div class="card-body">
+            <canvas class="js-chartjs-lines"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="row">
+
+      <div class="col-lg-12">
+        <div class="card">
+          <div class="card-header">
+            <h4>监控项目信息</h4>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover" id="table">
+
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--图表插件-->
+  <script type="text/javascript" src="/log/js/Chart.js"></script>
+  <script type="text/javascript" src="/log/js/bootstrap-table/bootstrap-table.min.js"></script>
+  <script type="text/javascript" src="/log/js/bootstrap-table/locale/bootstrap-table-zh-CN.min.js"></script>
+  <script type="text/javascript">
+    $(document).ready(function(e) {
+      getIndexInfo();
+      getSuccessChart();
+      getTimeChart();
+      initTable();
+    });
+
+    function getIndexInfo() {
+      $.ajax({
+        //请求方式
+        type: "POST",
+        //请求的媒体类型
+        contentType: "application/json;charset=UTF-8",
+        //请求地址
+        url: "/index/indexInfo",
+        //数据，json字符串
+        /*data: JSON.stringify({id: id, field: 'status', value: status}),*/
+        //请求成功
+        success: function (result) {
+          $("#serveCount").text(result.serveCount)
+          $("#requestCount").text(result.requestCount)
+          $("#successCount").text(result.successCount)
+          $("#failCount").text(result.failCount)
+        },
+        //请求失败，包含具体的错误信息
+        error: function (e) {
+          hz.notify(JSON.parse(e.responseText).message, "danger")
+        }
+
+      });
+    }
+
+    function getTimeChart() {
+      var $dashChartLinesCnt = jQuery( '.js-chartjs-lines' )[0].getContext( '2d' );
+      $.ajax({
+        //请求方式
+        type: "POST",
+        //请求的媒体类型
+        contentType: "application/json;charset=UTF-8",
+        //请求地址
+        url: "/index/timeChart",
+        //数据，json字符串
+        /*data: JSON.stringify({id: id, field: 'status', value: status}),*/
+        //请求成功
+        success: function (result) {
+          var $dashChartLinesData = {
+            labels: result.labels,
+            datasets: [
+              {
+                label: '请求耗时',
+                data: result.data,
+                borderColor: '#358ed7',
+                backgroundColor: 'rgba(53, 142, 215, 0.175)',
+                borderWidth: 1,
+                fill: false,
+                lineTension: 0.5
+              }
+            ]
+          };
+          new Chart($dashChartLinesCnt, {
+            type: 'line',
+            data: $dashChartLinesData,
+          });
+        },
+        //请求失败，包含具体的错误信息
+        error: function (e) {
+          hz.notify(JSON.parse(e.responseText).message, "danger")
+        }
+
+      });
+    }
+
+    function getSuccessChart() {
+      var $dashChartBarsCnt  = jQuery( '.js-chartjs-bars' )[0].getContext( '2d' );
+      $.ajax({
+        //请求方式
+        type: "POST",
+        //请求的媒体类型
+        contentType: "application/json;charset=UTF-8",
+        //请求地址
+        url: "/index/successChart",
+        //数据，json字符串
+        /*data: JSON.stringify({id: id, field: 'status', value: status}),*/
+        //请求成功
+        success: function (result) {
+          var $dashChartBarsData = {
+            labels: result.labels,
+            datasets: [
+              {
+                label: '请求成功率',
+                borderWidth: 1,
+                barWidth : 10,//柱图宽度
+                borderColor: 'rgba(0,0,0,0)',
+                backgroundColor: 'rgba(51,202,185,0.5)',
+                hoverBackgroundColor: "rgba(51,202,185,0.7)",
+                hoverBorderColor: "rgba(0,0,0,0)",
+                data: result.data
+              }
+            ]
+          };
+          new Chart($dashChartBarsCnt, {
+            type: 'bar',
+            data: $dashChartBarsData
+          });
+        },
+        //请求失败，包含具体的错误信息
+        error: function (e) {
+          hz.notify(JSON.parse(e.responseText).message, "danger")
+        }
+
+      });
+    }
+
+    function initTable() {
+      let config = {
+        url: '/serve/getServeInfos',
+        method: 'post',
+        queryParamsType: '',
+        sidePagination: "server",
+        pagination: true,
+        pageNumber: 1,      //初始化加载第一页，默认第一页
+        pageSize: 10,      //每页的记录行数（*）
+        pageList: [20, 50, 100, 150],  //可供选择的每页的行数（*）
+        columns: [{
+          field: 'id',
+          title: '序号',
+          align: 'center',
+          formatter: (value, row, index, field) => {
+            return index + 1;
+          }
+        }, {
+          field: 'name',
+          title: '名称',
+          align: 'center'
+        }, {
+          field: 'group',
+          title: '分组',
+          align: 'center'
+        }, {
+          field: 'type',
+          title: '请求方式',
+          align: 'center'
+        }, {
+          field: 'alarmType',
+          title: '报警方式',
+          align: 'center'
+        }, {
+          field: 'status',
+          title: '状态',
+          align: 'center',
+          formatter: (value, row, index, field) => {
+            let el;
+            switch (row.status) {
+              case "RUN":
+                el = '<a class="text-success" href="#!" data-toggle="tooltip">运行中</a>\n';
+                break;
+              case "STOP":
+                el = '<a class="text-warning" href="#!" data-toggle="tooltip">已停止</a>\n';
+                break;
+              case "HOLD":
+                el = '<a class="text-warning" href="#!" data-toggle="tooltip">已挂起</a>\n';
+                break;
+              default:
+                el = '<a class="text-default" href="#!" data-toggle="tooltip">未运行</a>\n'
+                break;
+
+            }
+            return el;
+          }
+        }]
+      };
+      $('#table').bootstrapTable(config);
+      $('.fixed-table-loading').hide();
+    }
+
+  </script>
+{{end}}
