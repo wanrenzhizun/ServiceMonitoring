@@ -4,7 +4,7 @@
 
 自定义校验格式如下：
 
-{\r
+{
     "type": "re",        //匹配规则：re代表正则匹配，eq代表相等
     "condition": "200",     //匹配条件
     "field": "statusCode",   //需匹配的属性，有：proto；header；statusCode；status；body几个属性
