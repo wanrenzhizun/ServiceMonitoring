@@ -2,6 +2,13 @@
 
 本系统支持请求返回数据自定义校验，当任务失败时可以通过钉钉或者邮箱通知，微信通知暂时不在考虑范围。
 
+安装：
+     直接点击下载对应系统安装包 [点击下载](https://github.com/wanrenzhizun/ServiceMonitoring/releases/tag/v1.0.0)，解压执行ServiceMonitoring文件即可
+     默认使用web端口8085，可在./config/user.ini 里面配置
+     默认使用./config/user.ini配置文件，
+     可指定配置文件运行：
+     ./ServiceMonitoring -u yourPath/xxx.ini
+
 自定义校验格式如下：
 
 {
